@@ -19,6 +19,8 @@ struct ContentView: View {
 }
 
 struct ChildView: View {
+    // This value behaves like a property value that has been passed
+    // through by it's parent
     @Environment(\.editMode) var editMode
 
     var body: some View {
@@ -43,6 +45,7 @@ extension EnvironmentValues {
 }
 
 extension View {
+    // Our uniform view modifier
     func withEditMode() -> some View {
         self
             .modifier(EditModeViewModifier())
@@ -54,11 +57,15 @@ private struct EditModeViewModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            // Setting the state value the environment
             .environment(\.editMode, editMode)
-            .onReceive(NotificationCenter.default.publisher(for: Notification.Name(rawValue: "change_edit_mode")), perform: { output in
-                guard let newEditMode = output.object as? EditMode, newEditMode != editMode else { return }
-                editMode = newEditMode
-            })
+            .onReceive(NotificationCenter.default
+                // Using the Notification.Name "change_edit_mode" to recieve edit mode changes
+                .publisher(for: Notification.Name(rawValue: "change_edit_mode")), perform: { output in
+                    guard let newEditMode = output.object as? EditMode, newEditMode != editMode else { return }
+                    // Updating the edit mode state when publisher has recieved a new value.
+                    editMode = newEditMode
+                })
     }
 }
 
@@ -74,6 +81,7 @@ struct EditButton: View {
     var body: some View {
         Button(action: {
             NotificationCenter.default.post(
+                // Using the Notification.Name "change_edit_mode" to post new edit mode changes
                 name: Notification.Name(rawValue: "change_edit_mode"),
                 object: editMode.isEditing ? EditMode.inactive : EditMode.active,
                 userInfo: nil)
